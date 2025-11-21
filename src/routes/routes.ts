@@ -1,10 +1,7 @@
 import { Router } from "express";
 
 import userRoutes from "./userRoutes";
-
-
-import passwordRoutes from "./passwordRoutes";
-
+import meetingRoutes from "./meetingRoutes";
 
 
 const router = Router();
@@ -21,9 +18,6 @@ const router = Router();
  *   - DELETE /users/:id  → Delete a user by ID
  */
 router.use("/users", userRoutes);
-
-router.use("/password", passwordRoutes);
-
-
+router.use("/meetings", meetingRoutes);
 
 export default router;

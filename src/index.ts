@@ -14,6 +14,7 @@ import { connectFirebase } from "./config/firebase"; // firebase connection
 
 import routes from "./routes/routes"; // General API routes
 import userRoutes from "./routes/userRoutes"; // User management routes
+import meetingRoutes from "./routes/meetingRoutes";
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -85,6 +86,7 @@ app.use("/api/v1", routes);
  * Prefix: `/api/v1/users`
  */
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/meetings", meetingRoutes);
 
 
 /**
