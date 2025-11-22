@@ -41,7 +41,7 @@ app.use(express.json());
  */
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://plataforma-de-video-conferencias.vercel.app/"
+  "https://plataforma-de-video-conferencias.vercel.app"
 ];
 
 /**
