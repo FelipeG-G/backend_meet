@@ -87,6 +87,32 @@ class UserController {
     }
   }
 
+  async updateEmail(req: AuthRequest, res: Response) {
+    try {
+      const { email } = req.body;
+      const uid = req.userId!;
+
+      if (!email || typeof email !== "string") {
+        return res.status(400).json({ message: "New email is required" });
+      }
+
+      await firebaseAuth().updateUser(uid, { email });
+      await UserDAO.update(uid, { email });
+
+      return res.json({ message: "Email updated" });
+    } catch (error: any) {
+      const code = error?.code || error?.errorInfo?.code;
+      if (code === "auth/email-already-exists") {
+        return res.status(409).json({ message: "Email already in use" });
+      }
+      if (code === "auth/invalid-email") {
+        return res.status(400).json({ message: "Invalid email" });
+      }
+      console.error("Error en updateEmail:", error);
+      return res.status(500).json({ message: error.message || "Unable to update email" });
+    }
+  }
+
   async getProfile(req: AuthRequest, res: Response) {
     try {
       const id = req.userId!;
