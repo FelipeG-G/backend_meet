@@ -6,7 +6,6 @@ import { createUserData } from "../models/User";
 import { AuthRequest } from "../Middleware/firebaseMiddleware";
 
 class UserController {
-
   async registerUser(req: Request, res: Response) {
     try {
       const { email, password, username, lastname, birthdate } = req.body;
@@ -15,10 +14,8 @@ class UserController {
         return res.status(400).json({ message: "Email and password are required" });
       }
 
-      // Crear usuario en Firebase Auth
       const userRecord = await firebaseAuth().createUser({ email, password });
 
-      // Datos que se guardan en Firestore
       const userData = createUserData(
         { email, username, lastname, birthdate },
         userRecord.uid
@@ -27,20 +24,63 @@ class UserController {
       await UserDAO.create(userRecord.uid, userData);
 
       return res.status(201).json({
-        message: "Usuario registrado con éxito",
+        message: "Usuario registrado con exito",
         user: userData,
       });
-
     } catch (error: any) {
-      console.error("🔥 Error en registerUser:", error);
+      console.error("Error en registerUser:", error);
       return res.status(500).json({ message: error.message });
     }
   }
 
   async loginUser(req: Request, res: Response) {
-    return res.status(400).json({
-      message: "Login must be handled from client using Firebase Auth."
-    });
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const apiKey = process.env.FIREBASE_WEB_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ message: "Missing FIREBASE_WEB_API_KEY" });
+      }
+
+      const response = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            password,
+            returnSecureToken: true,
+          }),
+        }
+      );
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message =
+          payload?.error?.message === "INVALID_PASSWORD"
+            ? "Invalid credentials"
+            : payload?.error?.message || "Unable to login with email/password";
+        return res.status(401).json({ message });
+      }
+
+      const user = await UserDAO.findByEmail(email).catch(() => null);
+
+      return res.json({
+        message: "Login successful",
+        idToken: payload?.idToken,
+        refreshToken: payload?.refreshToken,
+        user,
+      });
+    } catch (error: any) {
+      console.error("Error en loginUser:", error);
+      return res.status(500).json({ message: error.message });
+    }
   }
 
   async getProfile(req: AuthRequest, res: Response) {
@@ -51,9 +91,8 @@ class UserController {
       if (!user) return res.status(404).json({ message: "User not found" });
 
       return res.json(user);
-
     } catch (error: any) {
-      console.error("🔥 Error en getProfile:", error);
+      console.error("Error en getProfile:", error);
       return res.status(500).json({ message: error.message });
     }
   }
@@ -63,9 +102,8 @@ class UserController {
       await UserDAO.update(req.userId!, req.body);
 
       return res.json({ message: "Profile updated" });
-
     } catch (error: any) {
-      console.error("🔥 Error en updateProfile:", error);
+      console.error("Error en updateProfile:", error);
       return res.status(500).json({ message: error.message });
     }
   }
@@ -74,13 +112,12 @@ class UserController {
     try {
       const id = req.userId!;
 
-      await UserDAO.delete(id);               // borra de Firestore
-      await firebaseAuth().deleteUser(id);    // borra de Firebase Auth
+      await UserDAO.delete(id);
+      await firebaseAuth().deleteUser(id);
 
       return res.json({ message: "User deleted" });
-
     } catch (error: any) {
-      console.error("🔥 Error en deleteProfile:", error);
+      console.error("Error en deleteProfile:", error);
       return res.status(500).json({ message: error.message });
     }
   }
@@ -95,16 +132,15 @@ class UserController {
         message: "Reset email sent",
         link,
       });
-
     } catch (error: any) {
-      console.error("🔥 Error en requestPasswordReset:", error);
+      console.error("Error en requestPasswordReset:", error);
       return res.status(500).json({ message: error.message });
     }
   }
 
   async resetPassword(req: Request, res: Response) {
     return res.status(400).json({
-      message: "Password reset handled automatically by Firebase email link"
+      message: "Password reset handled automatically by Firebase email link",
     });
   }
 }
