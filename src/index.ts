@@ -3,16 +3,16 @@
  * Configures environment variables, Firebase connection, global middleware, and route mounting.
  */
 
+// Load environment variables before any other imports
+import "./config/env";
+
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import { connectFirebase } from "./config/firebase";
 
 import routes from "./routes/routes";
 import userRoutes from "./routes/userRoutes";
 import meetingRoutes from "./routes/meetingRoutes";
-
-dotenv.config();
 
 /**
  * Main Express application instance.

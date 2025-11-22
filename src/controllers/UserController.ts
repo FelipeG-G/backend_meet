@@ -1,9 +1,64 @@
 // src/controllers/UserController.ts
 import { Request, Response } from "express";
+import sgMail from "@sendgrid/mail";
 import { firebaseAuth } from "../config/firebase";
 import UserDAO from "../dao/UserDAO";
 import { createUserData } from "../models/User";
 import { AuthRequest } from "../Middleware/firebaseMiddleware";
+
+// Normalize SendGrid env values.
+const SENDGRID_API_KEY = (process.env.SENDGRID_API_KEY || "").trim();
+const SENDGRID_FROM = (process.env.SENDGRID_FROM || "").trim();
+
+// Configure SendGrid once on import if configuration is present.
+if (SENDGRID_API_KEY) {
+  sgMail.setApiKey(SENDGRID_API_KEY);
+}
+
+/**
+ * Send a password reset email using SendGrid.
+ */
+const sendPasswordResetEmail = async (to: string, username: string, resetLink: string) => {
+  const html = `
+  <div style="font-family: Arial, sans-serif; background: #f7f7f7; padding: 40px;">
+    <div style="max-width: 600px; background: white; margin: auto; padding: 20px; border-radius: 12px; border: 1px solid #eee;">
+      <h2 style="color: #121212;">Hola ${username || "Usuario"},</h2>
+      <p style="font-size: 16px; color: #555;">
+        Has solicitado restablecer tu contraseña. Haz clic en el siguiente botón:
+      </p>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${resetLink}"
+           style="
+             display: inline-block;
+             background: #2b6cb0;
+             color: white;
+             padding: 14px 22px;
+             border-radius: 8px;
+             text-decoration: none;
+             font-size: 16px;">
+          Restablecer contraseña
+        </a>
+      </div>
+
+      <p style="color: #555;">Si no solicitaste este cambio, simplemente ignora este mensaje.</p>
+
+      <p style="margin-top: 40px; color: #888; font-size: 13px;">
+        — Equipo Plataforma Meet
+      </p>
+    </div>
+  </div>
+  `;
+
+  const msg = {
+    to,
+    from: SENDGRID_FROM || "",
+    subject: "Restablecer contraseña",
+    html,
+  };
+
+  await sgMail.send(msg);
+};
 
 /**
  * Handles user lifecycle operations backed by Firebase Auth and Firestore.
@@ -211,11 +266,21 @@ export class UserController {
     try {
       const { email } = req.body;
 
+      if (!SENDGRID_API_KEY || !SENDGRID_FROM) {
+        return res.status(500).json({ message: "Missing SendGrid configuration" });
+      }
+
+      const user = await UserDAO.findByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
       const link = await firebaseAuth().generatePasswordResetLink(email);
 
+      await sendPasswordResetEmail(email, user.username, link);
+
       return res.json({
-        message: "Reset email sent",
-        link,
+        message: "Reset email sent successfully",
       });
     } catch (error: any) {
       console.error("Error en requestPasswordReset:", error);
