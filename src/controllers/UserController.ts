@@ -38,9 +38,53 @@ class UserController {
   }
 
   async loginUser(req: Request, res: Response) {
-    return res.status(400).json({
-      message: "Login must be handled from client using Firebase Auth."
-    });
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const apiKey = process.env.FIREBASE_WEB_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ message: "Missing FIREBASE_WEB_API_KEY" });
+      }
+
+      const response = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            password,
+            returnSecureToken: true,
+          }),
+        }
+      );
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message =
+          payload?.error?.message === "INVALID_PASSWORD"
+            ? "Invalid credentials"
+            : payload?.error?.message || "Unable to login with email/password";
+        return res.status(401).json({ message });
+      }
+
+      const user = await UserDAO.findByEmail(email).catch(() => null);
+
+      return res.json({
+        message: "Login successful",
+        idToken: payload?.idToken,
+        refreshToken: payload?.refreshToken,
+        user,
+      });
+    } catch (error: any) {
+      console.error("Error en loginUser:", error);
+      return res.status(500).json({ message: error.message });
+    }
   }
 
   async getProfile(req: AuthRequest, res: Response) {
@@ -48,7 +92,21 @@ class UserController {
       const id = req.userId!;
       const user = await UserDAO.findById(id);
 
-      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!user) {
+        // Si el usuario proviene de un proveedor social y aún no tiene documento,
+        // lo creamos en Firestore con los datos básicos que tenga Firebase.
+        const userRecord = await firebaseAuth().getUser(id);
+        const email = userRecord.email || "";
+        const displayName = userRecord.displayName || email.split("@")[0] || "";
+
+        const newUser = createUserData(
+          { email, username: displayName, lastname: "", birthdate: "" },
+          id
+        );
+
+        await UserDAO.create(id, newUser);
+        return res.json(newUser);
+      }
 
       return res.json(user);
 
