@@ -1,14 +1,13 @@
-// src/routes/MeetingRoutes.ts
-
+// src/routes/meetingRoutes.ts
 import { Router } from "express";
 import MeetingController from "../controllers/MeetingController";
 import { firebaseAuthMiddleware } from "../Middleware/firebaseMiddleware";
 
 const router = Router();
 
-// ==========================================
-//   Todas las rutas requieren autenticación
-// ==========================================
+/**
+ * Meeting routes. All endpoints require Firebase authentication.
+ */
 router.post("/", firebaseAuthMiddleware, (req, res) =>
   MeetingController.createMeeting(req, res)
 );

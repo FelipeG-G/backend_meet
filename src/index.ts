@@ -1,52 +1,39 @@
 /**
- * @file index.ts
- * @description Main entry point for the Express server. 
- * Configures environment variables, database connection, 
- * global middlewares, CORS handling, and route mounting.
- * 
- * @module Server
+ * Main entry point for the Express server.
+ * Configures environment variables, Firebase connection, global middleware, and route mounting.
  */
 
 import express from "express";
 import dotenv from "dotenv";
-import cors from "cors"; // Enables CORS to allow frontend requests
-import { connectFirebase } from "./config/firebase"; // firebase connection
+import cors from "cors";
+import { connectFirebase } from "./config/firebase";
 
-import routes from "./routes/routes"; // General API routes
-import userRoutes from "./routes/userRoutes"; // User management routes
+import routes from "./routes/routes";
+import userRoutes from "./routes/userRoutes";
 import meetingRoutes from "./routes/meetingRoutes";
 
-dotenv.config(); // Load environment variables from .env file
+dotenv.config();
 
-/** 
+/**
  * Main Express application instance.
- * @type {import('express').Application}
  */
 const app = express();
 
-/* ==========================
-   🧩 GLOBAL MIDDLEWARES
-   ========================== */
-
 /**
  * Middleware to parse incoming JSON requests.
- * Allows Express to handle JSON data in request bodies.
  */
 app.use(express.json());
 
 /**
  * Whitelisted origins allowed for CORS requests.
- * Includes development and production environments (Vercel, Render, Localhost).
- * @type {string[]}
  */
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://plataforma-de-video-conferencias.vercel.app"
+  "https://plataforma-de-video-conferencias.vercel.app",
 ];
 
 /**
- * CORS Middleware.
- * Only allows requests from the origins defined in allowedOrigins.
+ * CORS configuration that restricts origins to the whitelist.
  */
 app.use(
   cors({
@@ -62,44 +49,36 @@ app.use(
   })
 );
 
-/* ==========================
-   🧭 MAIN ROUTES
-   ========================== */
-
-
-
 /**
- * Establish MongoDB connection.
- * Executed when the server starts.
- * @function connectDB
+ * Establish Firebase connection once on startup.
  */
 connectFirebase();
 
 /**
- * General API routes.
+ * Mount base routes.
  * Prefix: `/api/v1`
  */
 app.use("/api/v1", routes);
 
 /**
- * User management routes.
+ * Mount user routes directly for compatibility.
  * Prefix: `/api/v1/users`
  */
 app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/meetings", meetingRoutes);
-
 
 /**
- * @route GET /
- * @description Health check endpoint. 
- * Verifies that the server is running correctly.
- * @returns {string} A confirmation message.
+ * Mount meeting routes directly for compatibility.
+ * Prefix: `/api/v1/meetings`
+ */
+app.use("/api/v1/meetings", meetingRoutes);
+
+/**
+ * Health check endpoint.
  */
 app.get("/", (req, res) => res.send("Server is running"));
 
 /**
- * Starts the server only if this file is executed directly.
- * Skipped when running unit tests or importing the module.
+ * Start the HTTP server when executed directly.
  */
 if (require.main === module) {
   const PORT = process.env.PORT || 8080;
@@ -107,6 +86,5 @@ if (require.main === module) {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
-
 
 export default app;

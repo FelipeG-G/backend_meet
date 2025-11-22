@@ -5,7 +5,16 @@ import UserDAO from "../dao/UserDAO";
 import { createUserData } from "../models/User";
 import { AuthRequest } from "../Middleware/firebaseMiddleware";
 
-class UserController {
+/**
+ * Handles user lifecycle operations backed by Firebase Auth and Firestore.
+ */
+export class UserController {
+  /**
+   * Create a Firebase Auth user and persist a profile document.
+   *
+   * @param req - Request containing `email`, `password`, and optional profile fields.
+   * @param res - Response with created user data or validation errors.
+   */
   async registerUser(req: Request, res: Response) {
     try {
       const { email, password, username, lastname, birthdate } = req.body;
@@ -33,6 +42,12 @@ class UserController {
     }
   }
 
+  /**
+   * Authenticate a user through Firebase Auth REST API and return tokens.
+   *
+   * @param req - Request containing `email` and `password`.
+   * @param res - Response with ID/refresh tokens and stored profile.
+   */
   async loginUser(req: Request, res: Response) {
     try {
       const { email, password } = req.body;
@@ -83,6 +98,12 @@ class UserController {
     }
   }
 
+  /**
+   * Update the authenticated user's email in Firebase Auth and Firestore.
+   *
+   * @param req - Authenticated request with new `email`.
+   * @param res - Response confirming update or describing validation errors.
+   */
   async updateEmail(req: AuthRequest, res: Response) {
     try {
       const { email } = req.body;
@@ -109,14 +130,20 @@ class UserController {
     }
   }
 
+  /**
+   * Retrieve the authenticated user's profile; auto-creates it when missing.
+   *
+   * @param req - Authenticated request with `userId` set by middleware.
+   * @param res - Response with profile data.
+   */
   async getProfile(req: AuthRequest, res: Response) {
     try {
       const id = req.userId!;
       const user = await UserDAO.findById(id);
 
       if (!user) {
-        // Si el usuario proviene de un proveedor social y aún no tiene documento,
-        // lo creamos en Firestore con los datos básicos que tenga Firebase.
+        // If the user signed in via a social provider and lacks a document,
+        // create a minimal Firestore profile using available Firebase data.
         const userRecord = await firebaseAuth().getUser(id);
         const email = userRecord.email || "";
         const displayName = userRecord.displayName || email.split("@")[0] || "";
@@ -137,6 +164,12 @@ class UserController {
     }
   }
 
+  /**
+   * Patch the authenticated user's profile document with provided fields.
+   *
+   * @param req - Authenticated request carrying profile fields.
+   * @param res - Response confirming update.
+   */
   async updateProfile(req: AuthRequest, res: Response) {
     try {
       await UserDAO.update(req.userId!, req.body);
@@ -148,6 +181,12 @@ class UserController {
     }
   }
 
+  /**
+   * Remove the authenticated user's profile and Firebase Auth account.
+   *
+   * @param req - Authenticated request with `userId`.
+   * @param res - Response confirming deletion.
+   */
   async deleteProfile(req: AuthRequest, res: Response) {
     try {
       const id = req.userId!;
@@ -162,6 +201,12 @@ class UserController {
     }
   }
 
+  /**
+   * Trigger a Firebase Auth password reset email for the provided address.
+   *
+   * @param req - Request containing the target `email`.
+   * @param res - Response with generated reset link.
+   */
   async requestPasswordReset(req: Request, res: Response) {
     try {
       const { email } = req.body;
@@ -178,6 +223,12 @@ class UserController {
     }
   }
 
+  /**
+   * Inform clients that password reset flow is handled via Firebase email link.
+   *
+   * @param req - Request (unused).
+   * @param res - Response with guidance message.
+   */
   async resetPassword(req: Request, res: Response) {
     return res.status(400).json({
       message: "Password reset handled automatically by Firebase email link",
@@ -185,4 +236,5 @@ class UserController {
   }
 }
 
-export default new UserController();
+const userController = new UserController();
+export default userController;

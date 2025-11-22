@@ -1,0 +1,15 @@
+{
+  "entryPoints": [
+    "src/index.ts",
+    "src/controllers",
+    "src/routes",
+    "src/dao",
+    "src/models",
+    "src/Middleware"
+  ],
+  "entryPointStrategy": "expand",
+  "tsconfig": "tsconfig.json",
+  "out": "docs",
+  "includeVersion": true,
+  "excludeExternals": true
+}

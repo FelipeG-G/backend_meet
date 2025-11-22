@@ -1,15 +1,19 @@
 // src/controllers/MeetingController.ts
-
-import { Request, Response } from "express";
+import { Response } from "express";
 import MeetingDAO from "../dao/MeetingDAO";
 import { createMeetingData } from "../models/Meeting";
 import { AuthRequest } from "../Middleware/firebaseMiddleware";
 
-class MeetingController {
-
-  /** ===========================
-   *   CREATE MEETING
-   *  =========================== */
+/**
+ * Controller to manage meeting creation, retrieval, updates, and deletion.
+ */
+export class MeetingController {
+  /**
+   * Create a meeting owned by the authenticated user.
+   *
+   * @param req - Authenticated request containing meeting payload.
+   * @param res - Response with persisted meeting data.
+   */
   async createMeeting(req: AuthRequest, res: Response) {
     try {
       const hostId = req.userId!;
@@ -32,16 +36,18 @@ class MeetingController {
         message: "Meeting created successfully",
         meeting,
       });
-
     } catch (error: any) {
-      console.error("🔥 Error creating meeting:", error);
+      console.error("Error creating meeting:", error);
       return res.status(500).json({ message: error.message });
     }
   }
 
-  /** ===========================
-   *   GET USER MEETINGS
-   *  =========================== */
+  /**
+   * List meetings created by the authenticated user.
+   *
+   * @param req - Authenticated request with `userId`.
+   * @param res - Response containing meetings list.
+   */
   async getUserMeetings(req: AuthRequest, res: Response) {
     try {
       const userId = req.userId!;
@@ -49,35 +55,40 @@ class MeetingController {
       const meetings = await MeetingDAO.getByHostId(userId);
 
       return res.json(meetings);
-
     } catch (error: any) {
-      console.error("🔥 Error getting meetings:", error);
+      console.error("Error getting meetings:", error);
       return res.status(500).json({ message: error.message });
     }
   }
 
-  /** ===========================
-   *   GET MEETING BY ID
-   *  =========================== */
+  /**
+   * Retrieve a meeting by id.
+   *
+   * @param req - Authenticated request with route param `id`.
+   * @param res - Response with meeting data or a 404 message.
+   */
   async getMeetingById(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
       const meeting = await MeetingDAO.getById(id);
 
-      if (!meeting)
+      if (!meeting) {
         return res.status(404).json({ message: "Meeting not found" });
+      }
 
       return res.json(meeting);
-
     } catch (error: any) {
-      console.error("🔥 Error getting meeting:", error);
+      console.error("Error getting meeting:", error);
       return res.status(500).json({ message: error.message });
     }
   }
 
-  /** ===========================
-   *   UPDATE MEETING
-   *  =========================== */
+  /**
+   * Update a meeting document with provided fields.
+   *
+   * @param req - Authenticated request with route param `id` and body changes.
+   * @param res - Response confirming update.
+   */
   async updateMeeting(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
@@ -85,16 +96,18 @@ class MeetingController {
       await MeetingDAO.update(id, req.body);
 
       return res.json({ message: "Meeting updated successfully" });
-
     } catch (error: any) {
-      console.error("🔥 Error updating meeting:", error);
+      console.error("Error updating meeting:", error);
       return res.status(500).json({ message: error.message });
     }
   }
 
-  /** ===========================
-   *   DELETE MEETING
-   *  =========================== */
+  /**
+   * Delete a meeting by id.
+   *
+   * @param req - Authenticated request with route param `id`.
+   * @param res - Response confirming deletion.
+   */
   async deleteMeeting(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
@@ -102,12 +115,12 @@ class MeetingController {
       await MeetingDAO.delete(id);
 
       return res.json({ message: "Meeting deleted successfully" });
-
     } catch (error: any) {
-      console.error("🔥 Error deleting meeting:", error);
+      console.error("Error deleting meeting:", error);
       return res.status(500).json({ message: error.message });
     }
   }
 }
 
-export default new MeetingController();
+const meetingController = new MeetingController();
+export default meetingController;

@@ -1,11 +1,13 @@
 // src/routes/userRoutes.ts
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import UserController from "../controllers/UserController";
 import { firebaseAuthMiddleware } from "../Middleware/firebaseMiddleware";
 
 const router = Router();
 
-// Public
+/**
+ * Public authentication and account management endpoints.
+ */
 router.post("/register", (req, res) => UserController.registerUser(req, res));
 router.post("/login", (req, res) => UserController.loginUser(req, res));
 router.post("/request-password-reset", (req, res) =>
@@ -15,7 +17,9 @@ router.post("/reset-password", (req, res) =>
   UserController.resetPassword(req, res)
 );
 
-// Protected
+/**
+ * Authenticated profile management endpoints.
+ */
 router.get("/profile", firebaseAuthMiddleware, (req, res) =>
   UserController.getProfile(req, res)
 );

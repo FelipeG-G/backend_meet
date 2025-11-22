@@ -3,6 +3,10 @@ import admin from "firebase-admin";
 
 let appInitialized = false;
 
+/**
+ * Initialize Firebase Admin SDK using environment variables.
+ * Guarded to run only once across the process.
+ */
 export const connectFirebase = () => {
   if (appInitialized) return;
 
@@ -17,7 +21,7 @@ export const connectFirebase = () => {
     token_uri: process.env.FIREBASE_TOKEN_URI,
     auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT_URL,
     client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
-    universe_domain:process.env.FIREBASE_UNIVERSE_DOMAIN,
+    universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN,
   };
 
   admin.initializeApp({
@@ -25,9 +29,20 @@ export const connectFirebase = () => {
   });
 
   appInitialized = true;
-  console.log("🔥 Firebase inicializado correctamente");
+  console.log("Firebase initialized");
 };
 
+/**
+ * Return the shared Firestore instance.
+ */
 export const firebaseDB = () => admin.firestore();
+
+/**
+ * Return the shared Firebase Auth instance.
+ */
 export const firebaseAuth = () => admin.auth();
+
+/**
+ * Return the shared Firebase Storage instance.
+ */
 export const firebaseStorage = () => admin.storage();

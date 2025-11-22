@@ -1,22 +1,24 @@
 /**
- * @interface IMeeting
- * @description Represents a meeting created by a user.
+ * Represents a meeting created by a user.
  */
 export interface IMeeting {
-  id: string;            // Firestore document ID
-  ownerId: string;       // UID del usuario creador
-  title: string;         // Título de la reunión
-  description?: string;  // Opcional
-  date: string;          // Fecha YYYY-MM-DD
-  time: string;          // Hora HH:mm
-  duration: number;      // En minutos
+  id: string; // Firestore document ID
+  ownerId: string; // UID of the user who created the meeting
+  title: string;
+  description?: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  duration: number; // Minutes
   createdAt: string;
   updatedAt: string;
 }
 
 /**
- * @function createMeetingData
- * @description Builds a complete meeting object before storing in Firestore.
+ * Build a complete meeting object before storing it in Firestore.
+ *
+ * @param data - Partial meeting payload supplied by the client.
+ * @param ownerId - UID of the user who owns the meeting.
+ * @returns Meeting object with defaults and timestamps applied.
  */
 export const createMeetingData = (
   data: Partial<IMeeting>,
@@ -25,12 +27,12 @@ export const createMeetingData = (
   const now = new Date().toISOString();
 
   return {
-    id: "", // Se rellenará en el DAO
+    id: "", // Filled by the DAO when persisting
     ownerId,
     title: data.title ?? "",
     description: data.description ?? "",
-    date: data.date ?? now.split("T")[0],   // YYYY-MM-DD
-    time: data.time ?? "00:00",             // Default hour
+    date: data.date ?? now.split("T")[0],
+    time: data.time ?? "00:00",
     duration: data.duration ?? 30,
     createdAt: now,
     updatedAt: now,

@@ -1,21 +1,23 @@
 /**
- * @interface IUser
- * @description Represents a User profile stored in Firestore.
- * Authentication (email/password) will be handled by Firebase Auth.
+ * Represents a user profile stored in Firestore.
+ * Authentication is handled by Firebase Auth.
  */
 export interface IUser {
-  id: string;        // Firebase Auth UID
+  id: string; // Firebase Auth UID
   username: string;
   lastname: string;
-  birthdate: string;  // Firestore usually stores dates as strings or Timestamps
+  birthdate: string; // Date string or timestamp value
   email: string;
   createdAt: string;
   updatedAt: string;
 }
 
 /**
- * @function createUserData
- * @description Helper to generate new user data for Firestore.
+ * Helper to generate a new user profile payload with defaults applied.
+ *
+ * @param data - Partial data received from the client.
+ * @param id - Firebase Auth UID for the user.
+ * @returns Complete user payload ready for persistence.
  */
 export const createUserData = (data: Partial<IUser>, id: string): IUser => {
   const now = new Date().toISOString();

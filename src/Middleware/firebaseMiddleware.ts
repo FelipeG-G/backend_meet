@@ -2,10 +2,19 @@
 import { Request, Response, NextFunction } from "express";
 import { firebaseAuth } from "../config/firebase";
 
+/**
+ * Express request extended with Firebase user id injected by the auth middleware.
+ */
 export interface AuthRequest extends Request {
   userId?: string;
 }
 
+/**
+ * Verify Firebase ID tokens and attach the user id to the request.
+ *
+ * Expects an `Authorization: Bearer <token>` header. Rejects requests
+ * with missing/invalid tokens with a 401 response.
+ */
 export const firebaseAuthMiddleware = async (
   req: AuthRequest,
   res: Response,
@@ -22,12 +31,12 @@ export const firebaseAuthMiddleware = async (
 
     const decoded = await firebaseAuth().verifyIdToken(token);
 
-    // Firebase retorna uid, no id
+    // Firebase returns uid, not a numeric id.
     req.userId = decoded.uid;
 
     next();
   } catch (error) {
-    console.error("🔥 Error verificando token Firebase:", error);
-    return res.status(401).json({ message: "Token inválido o expirado" });
+    console.error("Error verifying Firebase token:", error);
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
