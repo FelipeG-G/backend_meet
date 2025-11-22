@@ -24,6 +24,10 @@ router.put("/profile", firebaseAuthMiddleware, (req, res) =>
   UserController.updateProfile(req, res)
 );
 
+router.put("/email", firebaseAuthMiddleware, (req, res) =>
+  UserController.updateEmail(req, res)
+);
+
 router.delete("/profile", firebaseAuthMiddleware, (req, res) =>
   UserController.deleteProfile(req, res)
 );
